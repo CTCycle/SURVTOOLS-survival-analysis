@@ -16,9 +16,7 @@ class UserOperations:
     #==========================================================================    
     def menu_selection(self, menu):
         
-        ''' 
-        menu_selection(menu)
-        
+        '''         
         Prompts a selection menu using a dictionary as reference, allows the user to
         select one option and returns the selection preference         
         
@@ -31,7 +29,7 @@ class UserOperations:
         '''        
         indexes = [idx + 1 for idx, val in enumerate(menu)]
         for key, value in menu.items():
-            print('{0} - {1}'.format(key, value))            
+            print(f'{key} - {value}')            
         print()     
         while True:
             try:
@@ -46,6 +44,8 @@ class UserOperations:
             break
         
         return op_sel
+    
+    
     
 
 

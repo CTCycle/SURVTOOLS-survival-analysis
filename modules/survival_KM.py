@@ -17,57 +17,88 @@ if __name__ == '__main__':
 
 # import modules and classes
 #------------------------------------------------------------------------------
-from modules.components.data_classes import SurvivalAnalysis
+from modules.components.data_classes import UserOperations, SurvivalAnalysis
 from modules.components.plot_classes import PlotBoard
 import modules.global_variables as GlobVar
 import modules.configurations as cnf
-
-# [PRELIMINARY DATA PROCESSING]
-#==============================================================================
-# ...
-#==============================================================================
-
-# load data and replace n.a. with numpy NaN
-#------------------------------------------------------------------------------
-filepath = os.path.join(GlobVar.data_path, f'{cnf.filename}.csv')                
-df_survival = pd.read_csv(filepath, sep= ';', encoding='utf-8')
-
 
 # [SURVIVAL ANALYSIS]
 #==============================================================================
 # ...
 #==============================================================================
+operator = UserOperations()
 plotworker = PlotBoard()
 survival = SurvivalAnalysis()
 
-print('''
-      
-SURVIVAL ANALYSIS
--------------------------------------------------------------------------------
-Generate Kaplan-Meier curves for the given dataset. As a second step, calculate the
-propensity score for the treatments groups, and apply the score to COX survival curves
-------------------------------------------------------------------------------- 
-    
-''')
-
-# create dataset comprising only a subset of columns
+# load data
 #------------------------------------------------------------------------------
-selected_columns = cnf.treatment_col + cnf.survival_events + cnf.survival_times
-df_redux = df_survival[selected_columns]
+filepath = os.path.join(GlobVar.data_path, f'{cnf.filename}.csv')                
+df_survival = pd.read_csv(filepath, sep= ';', encoding='utf-8')
+
+# Select columns for survival curves
+#------------------------------------------------------------------------------
+print(''' 
+------------------------------------------------------------------------------- 
+SURVIVAL ANALYSIS: KAPLAN-MEIER CURVES 
+-------------------------------------------------------------------------------
+Select the target columns to perform survival analysis. The following columns
+have been found in the dataset:
+-------------------------------------------------------------------------------
+''')
+for id, col in enumerate(df_survival.columns):
+    print(f'{id + 1} - {col}')
+print()
+while True:
+    try:
+        treatment_col = int(input('Select the patient treatment (grouping) column: '))               
+    except:
+        continue            
+    while treatment_col not in range(df_survival.shape[1]):
+        try:
+            treatment_col = int(input('Input is not valid, please select a valid option: '))                    
+        except:
+            continue
+    break
+
+while True:    
+    event_cols = input('Select the event columns (separated by comma): ')
+    event_cols = [int(col) for col in event_cols.split(',')]             
+    while all(col in range(df_survival.shape[1]) for col in event_cols):
+        break
+    else:
+        event_cols = input('Input is not valid, please select a valid option: ')
+        event_cols = [int(col) for col in event_cols.split(',')]
+    break
+
+while True:    
+    time_cols = input('Select the time columns (separated by comma): ')
+    time_cols = [int(col) for col in time_cols.split(',')]             
+    while all(col in range(df_survival.shape[1]) for col in time_cols):
+        break
+    else:
+        time_cols = input('Input is not valid, please select a valid option: ')
+        time_cols = [int(col) for col in time_cols.split(',')]
+    break
+
+# generate redux version of the dataset based on column selection
+#------------------------------------------------------------------------------
+selected_columns = [treatment_col] + event_cols + time_cols
+selected_columns = [x - 1 for x in selected_columns]
+df_survival_redux = df_survival.iloc[:, selected_columns]
 
 # check presence of null values
 #------------------------------------------------------------------------------
-null_values = df_redux.isnull().sum()
-df_redux = df_redux.dropna(how='any').astype(float)
+null_values = df_survival_redux.isnull().sum()
+df_survival_redux = df_survival_redux.dropna(how='any').astype(float)
 
 print(f'''
+-------------------------------------------------------------------------------
 OVERVIEW OF DATASET
 -------------------------------------------------------------------------------
 Number of observations =   {df_survival.shape[0]}
 NA values in the dataset = {null_values.max()}
-Number of true observation = {df_redux.shape[0]}
+Number of true observation = {df_survival_redux.shape[0]}
 -------------------------------------------------------------------------------    
-
 ''')
 
 # Generate survival curves (KaplanMeier curves)
